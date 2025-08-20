@@ -1,0 +1,34 @@
+workflows:
+  build_apk:
+    name: Build APK (Gerador PMOC)
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      vars:
+        APP_LABEL: "Gerador PMOC"
+        ORG_ID: "com.adclimatizacao"
+        PROJECT_NAME: "gerador_pmoc"
+    scripts:
+      - name: Ensure Flutter platform folder (android)
+        script: |
+          if [ ! -d android ]; then
+            flutter create . --platforms=android --org $ORG_ID --project-name $PROJECT_NAME --overwrite
+          fi
+      - name: Fetch packages
+        script: flutter pub get
+      - name: Generate app icons
+        script: dart run flutter_launcher_icons
+      - name: Set app label
+        script: |
+          VALUES_DIR="android/app/src/main/res/values"
+          mkdir -p "$VALUES_DIR"
+          cat > "$VALUES_DIR/strings.xml" <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Gerador PMOC</string>
+          </resources>
+          EOF
+      - name: Build APK (release)
+        script: flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
